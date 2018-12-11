@@ -20,32 +20,55 @@ class PdfViewer extends Component{
     this.setState({ numPages });
   }
 
-  componentDidMount () {
-    console.log('Converting ...');
-    // pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
+  setupCanvas = (viewport) => {
+    const canvas = this.refs.canvas;
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext("2d");
+    return ctx;
+  }
+
+  renderSinglePage = (page) => {
+    page.getTextContent({ normalizeWhitespace: true }).then((textContent) => {
+      console.log('Inside text context part');
+      textContent.styles.g_d0_f1.ascent = 0.5;
+      console.log(textContent);    
+    });
+    var viewport = page.getViewport(1.0);
+    const ctx = this.setupCanvas(viewport);
+    var renderTask = page.render({
+      canvasContext: ctx,
+      viewport: viewport
+    });
+    console.log('render task: ', renderTask);
+  }
+ 
+  getPdfData = (url) => {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.js';
-    pdfjsLib.getDocument('helloworld.pdf').then((pdf) => {
+    pdfjsLib.getDocument('test.pdf').then((pdf) => {
       console.log('Inside pdf part');
 
       pdf.getMetadata().then((data) => {
         console.log('inside metadata part');
-        // console.log(data);
       });
+      
       pdf.getPage(1).then((page) => {
         console.log('inside the page part');
-        page.getTextContent({ normalizeWhitespace: true }).then((textContent) => {
-          console.log('Inside text context part');
-          console.log(textContent);
-        });
+        this.renderSinglePage(page);
       });
     });
+  }
+
+  componentDidMount () {
+    this.getPdfData();
   }
 
   render() {
 
     return (
       <div>
-        <p>hello world</p>
+        <p>E-book viewer</p>
+        <canvas ref="canvas" width={640} height={425} />
       </div>
     );
   }
